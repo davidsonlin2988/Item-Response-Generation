@@ -1,0 +1,2 @@
+google-cloud-aiplatform==1.153.1
+pandas==3.0.3

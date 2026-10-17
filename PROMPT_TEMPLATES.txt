@@ -1,0 +1,717 @@
+IIR SIMULATED STUDENT RESPONSES — PROMPT TEMPLATES
+Basic (earlier) and detailed (later) versions
+
+This file lists the system prompt and user prompt template of each version of
+the response-generation pipeline:
+
+  Part A  BASIC (earlier)    prompting_basic.ipynb
+  Part B  DETAILED (later)   prompting_detailed.py (+ config/ and prompts/)
+  Part C  Story texts (identical in both versions)
+
+Each template was produced by running that version's own prompt-building
+code with placeholders substituted in, so the wording matches what is sent
+to the model exactly. Text between >>>>> BEGIN and <<<<< END markers is the
+literal prompt. Words in {CURLY_BRACES} are placeholders filled in per
+simulated student; the values they take are listed after each template.
+The JSON braces { } in the RESPONSE FORMAT blocks are literal.
+
+KEY DIFFERENCES
+  - Basic: 1 API call per student, covering all 3 stories at once.
+    Detailed: 3 API calls per student, one story per call, stories in random
+    order.
+  - Basic: the student profile is the IIR level only.
+    Detailed: IIR level + reading/comic experience level + personality trait.
+  - Basic: questions always in the same order.
+    Detailed: the two question pairs of each story are shuffled per student.
+  - Detailed adds word-count targets per IIR level (system prompt) and two
+    more instructions about answer continuity and thoroughness.
+
+==============================================================================
+PART A — BASIC (EARLIER) VERSION: prompting_basic.ipynb
+==============================================================================
+Call settings: model gemini-3-flash-preview, temperature 1.0, JSON output
+mode (response_mime_type="application/json"). The system prompt below is passed
+as the system instruction; the user prompt is the message.
+Sampling: IIR0-IIR3 at 25% each; within each level, half comic and half text.
+
+A1. System prompt (identical on every call)
+-------------------------------------------
+>>>>>>>>>> BEGIN >>>>>>>>>>
+You are an experienced high school / middle school instructor with deep expertise in how students develop Inferential Integration in Reading (IIR) — the ability to understand information from a story with world knowledge to construct meaning. Based on your teaching experience, predict the answer that a specific student would give, based on their respective performance waypoint. Do not explain your reasoning. Only output the student's response.
+ Each student response must follow one of the 4 descriptive waypoints regarding student performance:
+ IIR0: No meaningful response provided.
+ Students do not generate an inference nor try to answer the question.  Instead, they say “I don’t know” or make a nonsensical statement (e.g., stating irrelevant world knowledge, unrelated to the story). In other words, they fail to make a coherent link  between the question, the text, or their world knowledge.
+ IIR1: Text-Base Only (Local)
+ Students generate an inference connecting the question only with the information explicitly stated in the story. Use of world-knowledge is absent. This signals student inference is limited to text-base representation; without the schema/background knowledge activation, their inference may be thin, lacking elaboration of the “why” and the “how” behind the narrative
+ IIR2: World Knowledge (Global) Only
+ Students generate an inference connecting the question primarily with their background knowledge. Use of text-base information is implicit. This signals their 'script-based' reasoning—they answer based on how the world usually operates without explicitly integrating how the story specifically describes it.
+ IIR3: Combination (Global and Local)
+ Students generate an inference connecting the question with both world/background knowledge AND information explicitly mentioned in the text (text-based information). In other words, students go beyond merely identifying text-base information,  anchoring it within a broader real-world schema (i.e., background knowledge) to explain the why or how behind the narrative. This achieves the highest level of coherence (“the situation model”, Kintsch, 1988, 1998) because the student integrates the text-base information and their prior knowledge to generate a novel, unified interpretation.
+
+ Note: Each simulated student will either evaluate a comic OR text-only scenario that will be given by the user prompt.
+ Each simulated student also will specify one of the 4 'comic experience levels' that that they have, given by the user prompt.
+ The comic experience levels are:
+ 'No experience', 'Little experience', 'Medium experience', 'High experience', or 'Missing' 
+<<<<<<<<<< END <<<<<<<<<<
+Note: the system prompt says the user prompt will give a comic experience
+level, but the basic user prompt (A2/A3) never includes one.
+
+A2. User prompt template — text-format student
+----------------------------------------------
+>>>>>>>>>> BEGIN >>>>>>>>>>
+==================== TARGET STUDENT PROFILE ====================
+IIR Developmental Level: {WAYPOINT_LABEL}
+CONSTRUCT MAP DEFINITION:
+{WAYPOINT_DEFINITION}
+
+
+Below are 3 different scenarios. Please read the story and answer the questions for each.
+
+==================== SCENARIO 1: CAT ====================
+STORY:
+{CAT_STORY}
+
+QUESTIONS:
+
+1.Why did the red headed boy keep the cat?
+2.What made you think of that answer?
+3.What lesson could someone learn from this story?
+4.What made you think of that answer?
+
+
+
+==================== SCENARIO 2: LYING ====================
+STORY:
+{LYING_STORY}
+
+QUESTIONS:
+
+1.Why doesn’t Sarah tell the teacher that Rachel is looking at another  student’s answers?
+2.What made you think of that answer?
+3.What lesson could someone learn from this story?
+4.What made you think of that answer?
+
+
+==================== SCENARIO 3: STEALING ====================
+STORY:
+{STEALING_STORY}
+
+QUESTIONS:
+
+1.Why did Billy keep the lady’s wallet?
+2.What made you think of that answer?
+3.What lesson could someone learn from this story?
+4.What made you think of that answer?
+
+
+
+==================== RESPONSE FORMAT ====================
+Return a single valid JSON object with exactly these 12 keys.
+Each value should be a short open-ended text response as the student would write it.
+Do not include any explanation or text outside the JSON.
+
+{
+    "cat_text_1": "...",
+    "cat_text_2": "...",
+    "cat_text_3": "...",
+    "cat_text_4": "...",
+    "lying_text_1": "...",
+    "lying_text_2": "...",
+    "lying_text_3": "...",
+    "lying_text_4": "...",
+    "stealing_text_1": "...",
+    "stealing_text_2": "...",
+    "stealing_text_3": "...",
+    "stealing_text_4": "..."
+}
+
+
+
+==================== INSTRUCTIONS ====================
+1. You MUST answer every single item. Do not leave any key empty.
+2. Write exactly as a student at the specified IIR level would write.
+3. Keep responses short and natural — like a real student, not an essay.
+4. Do not use perfect grammar or overly sophisticated vocabulary.
+5. The meta-reasoning answers (Q3, Q4) should reference BOTH the story
+   AND personal experience depending on the IIR level.
+6. Do not explain your reasoning or mention the IIR level anywhere.
+7. Output valid JSON only — no extra text, no markdown, no code fences.
+<<<<<<<<<< END <<<<<<<<<<
+
+A3. User prompt template — comic-format student
+-----------------------------------------------
+The three comic PDFs are sent as attachments in the same message, before the
+text part. The text part has no story text, only the questions.
+>>>>>>>>>> BEGIN >>>>>>>>>>
+[ATTACHMENT 1: PDF file — Cat.pdf comic]
+[ATTACHMENT 2: PDF file — Lying.pdf comic]
+[ATTACHMENT 3: PDF file — Stealing.pdf comic]
+[TEXT PART — sent after the attachment(s)]
+==================== TARGET STUDENT PROFILE ====================
+IIR Developmental Level: {WAYPOINT_LABEL}
+CONSTRUCT MAP DEFINITION:
+{WAYPOINT_DEFINITION}
+
+
+Below are 3 comic stories attached as documents in order: Cat, Lying, and Stealing. Please read the comics and answer the corresponding questions for each.
+
+==================== SCENARIO 1: CAT QUESTIONS ====================
+
+1.Why did the red headed boy keep the cat?
+2.What made you think of that answer?
+3.What lesson could someone learn from this story?
+4.What made you think of that answer?
+
+
+
+==================== SCENARIO 2: LYING QUESTIONS ====================
+
+1.Why doesn’t Sarah tell the teacher that Rachel is looking at another  student’s answers?
+2.What made you think of that answer?
+3.What lesson could someone learn from this story?
+4.What made you think of that answer?
+
+
+==================== SCENARIO 3: STEALING QUESTIONS ====================
+
+1.Why did Billy keep the lady’s wallet?
+2.What made you think of that answer?
+3.What lesson could someone learn from this story?
+4.What made you think of that answer?
+
+
+
+==================== RESPONSE FORMAT ====================
+Return a single valid JSON object with exactly these 12 keys.
+Each value should be a short open-ended text response as the student would write it.
+Do not include any explanation or text outside the JSON.
+
+{
+    "cat_comic_1": "...",
+    "cat_comic_2": "...",
+    "cat_comic_3": "...",
+    "cat_comic_4": "...",
+    "lying_comic_1": "...",
+    "lying_comic_2": "...",
+    "lying_comic_3": "...",
+    "lying_comic_4": "...",
+    "stealing_comic_1": "...",
+    "stealing_comic_2": "...",
+    "stealing_comic_3": "...",
+    "stealing_comic_4": "..."
+}
+
+
+
+==================== INSTRUCTIONS ====================
+1. You MUST answer every single item. Do not leave any key empty.
+2. Write exactly as a student at the specified IIR level would write.
+3. Keep responses short and natural — like a real student, not an essay.
+4. Do not use perfect grammar or overly sophisticated vocabulary.
+5. The meta-reasoning answers (Q3, Q4) should reference BOTH the story
+   AND personal experience depending on the IIR level.
+6. Do not explain your reasoning or mention the IIR level anywhere.
+7. Output valid JSON only — no extra text, no markdown, no code fences.
+<<<<<<<<<< END <<<<<<<<<<
+
+A4. Placeholder values
+----------------------
+IIR LEVEL
+Fills {WAYPOINT_LABEL} and {WAYPOINT_DEFINITION}. Each student gets one of the
+four levels below, 25% of students each.
+
+  0 — No inference
+      Students do not generate an inference nor try to answer the question.
+      Instead, they say I don’t know or make a nonsensical statement (e.g.,
+      stating irrelevant world knowledge, unrelated to the story). In other
+      words, they fail to make a coherent link  between the question, the
+      text, or their world knowledge.
+
+  1 —Text-Implicit
+      Students generate an inference connecting the question only with the
+      information explicitly stated in the story. Use of world-knowledge is
+      absent. This signals student inference is limited to text-base
+      representation; without the schema/background knowledge activation,
+      their inference may be thin, lacking elaboration of the “why” and the
+      “how” behind the narrative.
+
+  2 — Script-Implicit
+      Students generate an inference connecting the question primarily with
+      their background knowledge. Use of text-base information is implicit.
+      This signals their 'script-based' reasoning—they answer based on how the
+      world usually operates without explicitly integrating how the story
+      specifically describes it.
+
+  3 — Combination
+      Students generate an inference connecting the question with both
+      world/background knowledge AND information explicitly mentioned in the
+      text (text-based information). In other words, students go beyond merely
+      identifying text-base information,  anchoring it within a broader
+      real-world schema (i.e., background knowledge) to explain the why or how
+      behind the narrative. This achieves the highest level of coherence (“the
+      situation model”, Kintsch, 1988, 1998) because the student integrates
+      the text-base information and their prior knowledge to generate a novel,
+      unified interpretation.
+
+STORIES
+{CAT_STORY}, {LYING_STORY} and {STEALING_STORY} are the story texts in Part C.
+
+==============================================================================
+PART B — DETAILED (LATER) VERSION: prompting_detailed.py
+==============================================================================
+Call settings: model gemini-3.1-pro-preview, temperature 1.0, JSON output
+mode (response_mime_type="application/json"); all from config/experiment.json.
+The system prompt below is passed as the system instruction; the user prompt is
+the message. Three calls per student, one per story, in a random order per
+student.
+Sampling: IIR level proportions IIR0 0.00%, IIR1 33.33%, IIR2 33.33%, IIR3 33.34%.
+Within each level, half comic and half text; within each level x format
+cell, experience levels balanced evenly; personality drawn at random from the 10 trait/pole combinations.
+The random draws are seeded (master_seed in config/experiment.json).
+
+B1. System prompt (identical on every call) — prompts/system_prompt.txt
+-----------------------------------------------------------------------
+>>>>>>>>>> BEGIN >>>>>>>>>>
+You are an experienced high school / middle school instructor with deep expertise in how students develop Inferential Integration in Reading (IIR) — the ability to understand information from a story with world knowledge to construct meaning. Based on your teaching experience, predict the answer that a specific student would give, based on their respective performance waypoint. Do not explain your reasoning. Only output the student's response.
+ Each student response must follow one of the 4 descriptive waypoints regarding student performance:
+ IIR0: No meaningful response provided.
+ Students do not generate an inference nor try to answer the question.  Instead, they say that they don't know or make a nonsensical statement (e.g., stating irrelevant world knowledge, unrelated to the story). In other words, they fail to make a coherent link  between the question, the text, or their world knowledge.
+ IIR1: Text-Base Only (Local)
+ Students generate an inference connecting the question only with the information explicitly stated in the story. Use of world-knowledge is absent. This signals student inference is limited to text-base representation; without the schema/background knowledge activation, their inference may be thin, lacking elaboration of the “why” and the “how” behind the narrative
+ IIR2: World Knowledge (Global) Only
+ Students generate an inference connecting the question primarily with their background knowledge. Use of text-base information is implicit. This signals their 'script-based' reasoning—they answer based on how the world usually operates without explicitly integrating how the story specifically describes it.
+ IIR3: Combination (Global and Local)
+ Students generate an inference connecting the question with both world/background knowledge AND information explicitly mentioned in the text (text-based information). In other words, students go beyond merely identifying text-base information,  anchoring it within a broader real-world schema (i.e., background knowledge) to explain the why or how behind the narrative. This achieves the highest level of coherence (“the situation model”, Kintsch, 1988, 1998) because the student integrates the text-base information and their prior knowledge to generate a novel, unified interpretation.
+
+Each student will also be assigned a personality type that will affect the tone of the writing response.
+ 
+Each simulated student will either evaluate a comic OR text-only scenario that will be given by the user prompt.
+
+Each simulated student also will specify one of the 3 'comic experience levels' that they have, given by the user prompt.
+The comic experience levels are:
+'Low experience', 'Moderate experience', 'High experience'
+
+NOTE: IIR 0 and 1 students should contain an average of 20-40 total words across all the question items
+      IIR 2 should contain an average of 35-75 total words across all the question items
+      IIR 3 should contain an average of 50-100 total words across all the question items
+<<<<<<<<<< END <<<<<<<<<<
+
+B2. User prompt template — text-format student (one story per call)
+-------------------------------------------------------------------
+>>>>>>>>>> BEGIN >>>>>>>>>>
+==================== TARGET STUDENT PROFILE ====================
+IIR Developmental Level: {WAYPOINT_LABEL}
+CONSTRUCT MAP DEFINITION:
+{WAYPOINT_DEFINITION}
+
+READING COMPREHENSION EXPERIENCE: {EXPERIENCE_LABEL}
+{EXPERIENCE_DEFINITION}
+
+IMPORTANT: The experience level above ONLY affects the student's writing style, vocabulary, and fluency. It does NOT change the reasoning depth or inference type — that is fully determined by the IIR Developmental Level above. A 'Low experience' IIR3 student still integrates text and world knowledge; they just express it in simpler language. An 'High experience' IIR1 student still uses only text-base information; they just express it more fluently.
+
+STUDENT PERSONALITY (EXPRESSION STYLE ONLY):
+Trait: {PERSONALITY_TRAIT_LABEL} — {LOW|HIGH}
+Description: {PERSONALITY_DESCRIPTION}
+Writing tendencies: {WRITING_TENDENCIES, joined with "; "}
+Engagement style: {ENGAGEMENT_STYLE}
+
+IMPORTANT: Personality ONLY affects tone and surface presentation. It does NOT affect reasoning depth or inference type — those are fully determined by the IIR Developmental Level above.
+
+
+Below is one scenario. Please read the story and answer the questions.
+
+==================== SCENARIO: {SCENARIO} ====================
+STORY:
+{STORY}
+
+QUESTIONS:
+{PAIR_1_QUESTION_a}
+{PAIR_1_QUESTION_b}
+{PAIR_2_QUESTION_a}
+{PAIR_2_QUESTION_b}
+
+
+==================== RESPONSE FORMAT ====================
+Return a single valid JSON object with exactly these 4 keys in the exact order shown below.
+Each value should be a short open-ended text response as the student would write it.
+Do not include any explanation or text outside the JSON.
+
+{
+    "{pair_1_key_a}": "...",
+    "{pair_1_key_b}": "...",
+    "{pair_2_key_a}": "...",
+    "{pair_2_key_b}": "..."
+}
+
+
+
+==================== INSTRUCTIONS ====================
+1. You MUST answer every single item. Do not leave any key empty.
+2. Write exactly as a student at the specified IIR level would write.
+3. Keep responses short and natural — like a real student, not an essay and only a couple of sentences.
+4. Do not use perfect grammar or overly sophisticated vocabulary.
+5. The meta-reasoning answers (2a, 2b) should reference BOTH the story
+   AND personal experience depending on the IIR level.
+6. Do not mention the IIR level anywhere.
+7. Maintain continuity between part (a) and (b) for each pair of questions, that is appropriate for each waypoint level.
+8. Have the student generated responses be as thorough as what is necessary to follow the waypoint guidelines.
+9. Output valid JSON only — no extra text, no markdown, no code fences.
+<<<<<<<<<< END <<<<<<<<<<
+Note: the two question pairs (PAIR_1, PAIR_2) are presented in random order
+for each student and story; the JSON keys follow the same order as the
+questions.
+
+B3. User prompt template — comic-format student (one story per call)
+--------------------------------------------------------------------
+The comic PDF for the story is sent as an attachment before the text part.
+Differences from B2: the experience header reads COMIC EXPERIENCE, the
+orienting sentence refers to the attached comic, and there is no STORY block.
+>>>>>>>>>> BEGIN >>>>>>>>>>
+[ATTACHMENT 1: PDF file — the comic for {Scenario} (prompts/comics/{Scenario}.pdf)]
+[TEXT PART — sent after the attachment(s)]
+==================== TARGET STUDENT PROFILE ====================
+IIR Developmental Level: {WAYPOINT_LABEL}
+CONSTRUCT MAP DEFINITION:
+{WAYPOINT_DEFINITION}
+
+COMIC EXPERIENCE: {EXPERIENCE_LABEL}
+{EXPERIENCE_DEFINITION}
+
+IMPORTANT: The experience level above ONLY affects the student's writing style, vocabulary, and fluency. It does NOT change the reasoning depth or inference type — that is fully determined by the IIR Developmental Level above. A 'Low experience' IIR3 student still integrates text and world knowledge; they just express it in simpler language. An 'High experience' IIR1 student still uses only text-base information; they just express it more fluently.
+
+STUDENT PERSONALITY (EXPRESSION STYLE ONLY):
+Trait: {PERSONALITY_TRAIT_LABEL} — {LOW|HIGH}
+Description: {PERSONALITY_DESCRIPTION}
+Writing tendencies: {WRITING_TENDENCIES, joined with "; "}
+Engagement style: {ENGAGEMENT_STYLE}
+
+IMPORTANT: Personality ONLY affects tone and surface presentation. It does NOT affect reasoning depth or inference type — those are fully determined by the IIR Developmental Level above.
+
+
+Below is one comic story attached as a document ({Scenario}). Please read the comic and answer the corresponding questions.
+
+==================== SCENARIO: {SCENARIO} ====================
+QUESTIONS:
+{PAIR_1_QUESTION_a}
+{PAIR_1_QUESTION_b}
+{PAIR_2_QUESTION_a}
+{PAIR_2_QUESTION_b}
+
+
+==================== RESPONSE FORMAT ====================
+Return a single valid JSON object with exactly these 4 keys in the exact order shown below.
+Each value should be a short open-ended text response as the student would write it.
+Do not include any explanation or text outside the JSON.
+
+{
+    "{pair_1_key_a}": "...",
+    "{pair_1_key_b}": "...",
+    "{pair_2_key_a}": "...",
+    "{pair_2_key_b}": "..."
+}
+
+
+
+==================== INSTRUCTIONS ====================
+1. You MUST answer every single item. Do not leave any key empty.
+2. Write exactly as a student at the specified IIR level would write.
+3. Keep responses short and natural — like a real student, not an essay and only a couple of sentences.
+4. Do not use perfect grammar or overly sophisticated vocabulary.
+5. The meta-reasoning answers (2a, 2b) should reference BOTH the story
+   AND personal experience depending on the IIR level.
+6. Do not mention the IIR level anywhere.
+7. Maintain continuity between part (a) and (b) for each pair of questions, that is appropriate for each waypoint level.
+8. Have the student generated responses be as thorough as what is necessary to follow the waypoint guidelines.
+9. Output valid JSON only — no extra text, no markdown, no code fences.
+<<<<<<<<<< END <<<<<<<<<<
+
+B4. Placeholder values
+----------------------
+Each simulated student gets one IIR level, one experience level and one
+personality. These stay the same in all three of the student's calls; only the
+story and its questions change from call to call.
+
+IIR LEVEL
+Fills {WAYPOINT_LABEL} and {WAYPOINT_DEFINITION}. These are the same four
+levels as A4; the only wording difference is that IIR0 puts 'I don't know' in
+quotes. IIR0 is not used in the current settings: its share in
+config/experiment.json is 0%. Source: config/waypoints.json.
+
+  0 — No inference
+      Students do not generate an inference nor try to answer the question.
+      Instead, they say 'I don't know' or make a nonsensical statement (e.g.,
+      stating irrelevant world knowledge, unrelated to the story). In other
+      words, they fail to make a coherent link  between the question, the
+      text, or their world knowledge.
+
+  1 —Text-Implicit
+      Students generate an inference connecting the question only with the
+      information explicitly stated in the story. Use of world-knowledge is
+      absent. This signals student inference is limited to text-base
+      representation; without the schema/background knowledge activation,
+      their inference may be thin, lacking elaboration of the “why” and the
+      “how” behind the narrative.
+
+  2 — Script-Implicit
+      Students generate an inference connecting the question primarily with
+      their background knowledge. Use of text-base information is implicit.
+      This signals their 'script-based' reasoning—they answer based on how the
+      world usually operates without explicitly integrating how the story
+      specifically describes it.
+
+  3 — Combination
+      Students generate an inference connecting the question with both
+      world/background knowledge AND information explicitly mentioned in the
+      text (text-based information). In other words, students go beyond merely
+      identifying text-base information,  anchoring it within a broader
+      real-world schema (i.e., background knowledge) to explain the why or how
+      behind the narrative. This achieves the highest level of coherence (“the
+      situation model”, Kintsch, 1988, 1998) because the student integrates
+      the text-base information and their prior knowledge to generate a novel,
+      unified interpretation.
+
+EXPERIENCE LEVEL
+Fills {EXPERIENCE_LABEL} and {EXPERIENCE_DEFINITION}. The three levels are
+spread evenly across students within each IIR level and format. Source:
+config/student_profile.json.
+
+  Low experience
+      Student has little to no prior experience with this type of reading
+      task.
+
+  Moderate experience
+      Student has some prior experience with this type of reading task.
+
+  High experience
+      Student has substantial prior experience with this type of reading task.
+      Responses are fluent and clear, while remaining concise. Vocabulary is
+      varied and ideas are expressed with clarity.
+
+The config file also lists a reading level, vocabulary level and other details
+for each experience level. These are not sent to the model.
+
+PERSONALITY
+Each entry below is the text that fills the STUDENT PERSONALITY block in B2
+and B3. Each student gets one of the 10 entries, chosen at random. Source:
+config/student_profile.json.
+
+  Openness to Experience — LOW
+    Description:         Flat, plain, matter-of-fact tone. Writes just what is
+                         needed with no personal flair or embellishment. May
+                         seem tonally disengaged even when their reasoning is
+                         solid. Does not add color, asides, or vivid language.
+    Writing tendencies:  plain, no-frills word choices; does not add personal
+                         asides or emotional color; writes the minimum to
+                         convey the point; tone is neutral or detached
+                         regardless of content
+    Engagement style:    plain, terse, tonally flat
+
+  Openness to Experience — HIGH
+    Description:         Expressive and colorful in tone. May use vivid
+                         language without substantially increasing response
+                         length
+    Writing tendencies:  uses vivid or emotional adjectives; adds personal
+                         flavor or enthusiasm ('omg', 'that's so sad', 'i
+                         really felt like...'); energetic or dramatic tone
+    Engagement style:    expressive, colorful, tonally engaged
+
+  Conscientiousness — LOW
+    Description:         Careless with surface presentation. Skips punctuation
+                         and capitalization. Writes quickly without polishing.
+                         Answers the question per their IIR waypoint, just
+                         sloppily. Brevity reflects low effort in writing, not
+                         low reasoning ability.
+    Writing tendencies:  skips punctuation and capitalization; does not
+                         proofread or self-correct surface errors; may
+                         truncate writing mid-thought due to low effort, not
+                         lack of understanding; informal, unpolished
+                         presentation
+    Engagement style:    low-effort presentation, quick, unpolished
+
+  Conscientiousness — HIGH
+    Description:         Neat and organized in presentation. Uses correct
+                         punctuation and capitalization. Doesn't ramble. Stays
+                         on format. Surface quality of writing is high
+                         regardless of reasoning depth.
+    Writing tendencies:  correct or near-correct punctuation and
+                         capitalization; organized, clear sentence structure;
+                         does not ramble or go off-format; polished
+                         presentation regardless of IIR level
+    Engagement style:    organized, polished, task-formatted
+
+  Extraversion — LOW
+    Description:         Reserved and inward in tone. Writes in a contained,
+                         understated way without reaching out to a reader or
+                         projecting energy. Reads as quiet even when the point
+                         is solid.
+    Writing tendencies:  reserved, understated phrasing; does not address or
+                         play to a reader; keeps energy low and contained;
+                         states the point without social warm-up
+    Engagement style:    reserved, quiet, self-contained
+
+  Extraversion — HIGH
+    Description:         Outgoing and socially energetic in tone. Writes as if
+                         talking to someone — direct address, exclamations, a
+                         chatty momentum — without necessarily adding more
+                         substance or vivid imagery.
+    Writing tendencies:  addresses the reader directly ('you know?',
+                         'right?'); uses exclamation points and chatty
+                         momentum; projects social energy and enthusiasm;
+                         conversational, outgoing delivery
+    Engagement style:    outgoing, chatty, socially energetic
+
+  Agreeableness — LOW
+    Description:         Blunt and critical in tone. States opinions plainly,
+                         can be dismissive or harsh about characters, and does
+                         not soften judgments. The reasoning may be fine; the
+                         delivery is sharp.
+    Writing tendencies:  blunt, unsoftened opinions; may judge or criticize
+                         characters harshly; does not soften criticism to be
+                         polite; matter-of-fact, can read as harsh
+    Engagement style:    blunt, critical, unsoftened
+
+  Agreeableness — HIGH
+    Description:         Warm and considerate in tone. Expresses sympathy for
+                         characters, gives them the benefit of the doubt, and
+                         softens judgments out of kindness. The warmth is a
+                         surface feature of delivery, not extra reasoning, and
+                         is distinct from neurotic self-doubt.
+    Writing tendencies:  warm, sympathetic phrasing toward characters; gives
+                         characters the benefit of the doubt; softens or
+                         qualifies criticism kindly; considerate,
+                         accommodating tone
+    Engagement style:    warm, sympathetic, accommodating
+
+  Neuroticism — LOW
+    Description:         Confident, direct tone. Writes declaratively without
+                         qualifying or second-guessing the expression. Sounds
+                         sure of themselves in how they phrase things,
+                         regardless of actual reasoning depth.
+    Writing tendencies:  declarative, unhedged phrasing ('he did it
+                         because...', 'the lesson is...'); no unnecessary
+                         qualifiers or apologies; consistent, steady tone
+                         throughout; sounds confident even when the underlying
+                         reasoning is thin
+    Engagement style:    confident, direct, tonally steady
+
+  Neuroticism — HIGH
+    Description:         Uncertain, hedging tone. Qualifies and second-guesses
+                         how things are expressed. Sounds unsure even when the
+                         underlying reasoning is solid. The hedging is a
+                         surface feature of presentation, not an indicator of
+                         weak inference.
+    Writing tendencies:  frequent hedging ('I think', 'maybe', 'I'm not sure
+                         but...'); may apologize or over-qualify ('this might
+                         be wrong but...'); emotionally reactive tone when
+                         story content is distressing; may trail off or seem
+                         uncertain in expression even at high IIR levels
+    Engagement style:    hedging, uncertain-sounding, emotionally reactive in
+                         tone
+
+STORY AND QUESTIONS
+{Scenario} is the story name (Cat, Lying or Stealing) and {SCENARIO} is the
+same name in capitals. {STORY} is the story text from Part C. Each story has
+two question pairs: pair 1 is questions (1a) and (1b), pair 2 is (2a) and
+(2b). The two pairs are asked in random order. Each question has a key, which
+is the name its answer gets in the JSON output. Source: config/scenarios.json.
+
+    Key         Question
+
+  Cat
+    cat_1       (1a).Why did the red headed boy keep the cat?
+    cat_2       (1b).What made you think of that answer?
+    cat_3       (2a).What lesson could someone learn from this story?
+    cat_4       (2b).What made you think of that answer?
+
+  Lying
+    lying_1     (1a).Why doesn’t Sarah tell the teacher that Rachel is looking
+                at another student’s answers?
+    lying_2     (1b).What made you think of that answer?
+    lying_3     (2a).What lesson could someone learn from this story?
+    lying_4     (2b).What made you think of that answer?
+
+  Stealing
+    stealing_1  (1a).Why did Billy keep the lady’s wallet?
+    stealing_2  (1b).What made you think of that answer?
+    stealing_3  (2a).What lesson could someone learn from this story?
+    stealing_4  (2b).What made you think of that answer?
+
+
+==============================================================================
+PART C — STORY TEXTS (identical in both versions)
+==============================================================================
+
+CAT — prompts/stories/cat.txt
+-----------------------------
+>>>>>>>>>> BEGIN >>>>>>>>>>
+There was a cat that lived on the streets that really wanted to find a home.
+But nobody wanted him. “Stinky cat”, said one boy to the cat.  “Yucky cat”, said a girl to the cat.
+
+Then on one cloudy day, the cat walked down a different street.
+He saw a boy with red hair sitting by himself, crying.  The cat wanted to make him feel better.
+
+So the cat jumped up on the bench, and walked onto his lap.
+The cat looked straight up at the red headed boy and said “Meow”.
+
+The boy looked down at the dirty cat. The boy pet the cat.
+The cat said “purrrrr”.  Then some boys (KIDS)  started laughing at the red headed boy.
+“Hahaha.  Now you’re just as yucky as that dirty cat” shouted one of the boys.
+
+The boy hated being laughed at, so he quickly put the cat down and stopped petting the cat.
+He shouted at the cat, “go away cat!  You’re making them laugh at me!”
+“Hey, you can come back and play basketball with us again, but after you wash your hands” shouted a boy.
+
+(THEN) The red headed boy, and his friends, walked back home together and came across the cat again.
+As the cat was sitting in the rain, wet, cold, and shaking, the boys were being mean to it and laughed at the cat.
+“Haha it’s about time you get a shower you stinky cat!” said one of the boys.
+The red headed boy saw how sad the cat was.  He walked over to it.
+“Don’t think I’ll let you play basketball with us again if you touch that dirty cat”, said one of the boys.
+The red headed boy bent down, and pet the cat anyways.
+He said to the cat, “hey there real friend.  My name is Bruno, and I’m going to take you to your new home, my home”.
+<<<<<<<<<< END <<<<<<<<<<
+
+LYING — prompts/stories/lying.txt
+---------------------------------
+>>>>>>>>>> BEGIN >>>>>>>>>>
+Two girls, Sarah and Rachel, have been best friends since they were toddlers.
+They are now in middle school, and are taking the same math class together.
+
+•“Hey Sarah, have you studied for that math test yet?” asked Rachel.
+“Yeah.  I’ve studied a lot for it.  What about you?” asked Sarah.
+
+“I haven’t studied at all.  But I feel confident that I will do well anyways”, said Rachel.
+
+It is the day of the test now.  They are sitting at their desks.
+“Alright everyone, I am about to pass your tests out.  Remember, no cheating.
+You have 40 minutes to finish”, says the teacher.
+
+Sarah says to herself,  “Hmm I better make sure I read each question carefully, so that I don’t miss anything, and answer any questions wrong”.
+
+Sarah looks over at her best friend Rachel.  She sees Rachel bubbling in every answer quickly on her answer sheet. Sarah says to herself, “But how could she know the answer to each question so quickly?  She didn’t even study.  She’s just probably guessing then.”
+
+Then Sarah sees Rachel looking over the shoulder of the kid who is sitting right in front of her. It looks like she is copying his answer sheet.
+
+Rachel notices that Sarah is looking at her.  Rachel whispers to Sarah, “Sarah shhhhh.  Don’t tell on me.  I’m your best friend”.
+
+“Is something going on Sarah?” asks the teacher.  “Nothing is going on Ms. Craig,” answers Sarah.  Sarah continues taking the test without looking up again.
+<<<<<<<<<< END <<<<<<<<<<
+
+STEALING — prompts/stories/stealing.txt
+---------------------------------------
+>>>>>>>>>> BEGIN >>>>>>>>>>
+Billy loved bikes.  He was riding his bike to the beach one day, when he came across the most beautiful bike he had ever seen.  He said to the boy that was riding the beautiful bike, “wow, that’s such a beautiful bike!”  “Thanks!” said the boy.
+
+“Hey, how much did you pay for that bike?” asked Billy.  “It was $300”, answered the boy.
+
+Billy rode his bike home.  He thought to himself, “hmmm, maybe my parents will buy me that bike for my birthday”.
+
+Billy got home. He says to his parents,“hey mom and dad.  For my birthday I would like a new bike pretty please!”.  “No Billy.  You already have a nice bike and you don’t need a new expensive one”, said his father.
+
+Billy felt sad, and mad.  So he took his bike, and rode it to an ice cream shop.
+
+Billy walked out of the ice cream shop with ice cream, and found a table to sit outside. “Ice cream, you always make me feel better” Billy said to himself.  Next to him was another table, where a lady was sitting.
+
+As Billy was eating his ice cream, the lady left and forgot her wallet.  Billy went and grabbed her wallet.  He opened her wallet.  “Wow, is this really $300? With that money, I could buy that red bike!”  Billy said.
+
+The lady that was sitting at the table next to him came back, looking for her wallet.  She said, “hello there, have you seen my wallet?  I can’t find it anywhere.”  “No, I don’t know where it is”, said Billy.
+<<<<<<<<<< END <<<<<<<<<<
